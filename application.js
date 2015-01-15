@@ -55,7 +55,7 @@
             var times = pt.getTimes(new Date(), cordinates, getTimeZone());
             for (var key in times) {
                 var obj = times[key];
-                // if (obj != "asr" || obj != "dhur" || obj != "fajr" || obj != "isha" || obj != "maghrib") return false;
+                if (key != "asr" || key != "dhur" || key != "fajr" || key != "isha" || key != "maghrib") return false;
                 updateTime(times);
                 if (time24Hrs(new Date()) == obj) {
                     playAlarm();
