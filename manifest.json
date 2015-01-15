@@ -1,0 +1,13 @@
+{
+    "name": "Islamic Prayer Times",
+    "manifest_version": 2,
+    "version": "1.0.0",
+    "description": "Get Accurate Prayer times",
+    "browser_action": {
+        "name": "Islamic Prayer Times"
+    },
+    "background": {
+        "scripts": ["prayerTime.js", "application.js"]
+    },
+    "permissions": ["notifications", "background"]
+}
