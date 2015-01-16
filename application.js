@@ -6,17 +6,21 @@ function saveOptions(button) {
     xmlhttp.send();
     xmlhttp.onreadystatechange = function() {
         if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+            button.innerHTML = 'Save';
             responseData = JSON.parse(xmlhttp.responseText);
-            console.log(responseData);
-            chrome.storage.sync.set({
-                city: city,
-                lat: responseData.results[0].geometry.location.lat,
-                lng: responseData.results[0].geometry.location.lng
-            }, function() {
-                // Update status to let user know options were saved.
-                button.innerHTML = 'Save';
-                //alert('Settings Saved');
-            });
+            //console.log(responseData);
+            if (responseData.results.length > 0) {
+                chrome.storage.sync.set({
+                    city: city,
+                    lat: responseData.results[0].geometry.location.lat,
+                    lng: responseData.results[0].geometry.location.lng
+                }, function() {
+                    // Update status to let user know options were saved.
+                    //alert('Settings Saved');
+                });
+            } else {
+                alert('City name is not correct');
+            }
         }
     }
 }
@@ -39,7 +43,6 @@ dateBox.innerHTML = new Date().toString();
         updateTime();
     }, 1000);
 })();
-
 //Update Prayer Time
 (function() {
     chrome.storage.sync.get({
@@ -47,8 +50,8 @@ dateBox.innerHTML = new Date().toString();
         lat: '',
         lng: ''
     }, function(info) {
-        document.getElementById('city').value = info.city
-        changePrayerTime(info)
+        document.getElementById('city').value = info.city;
+        changePrayerTime(info);
     });
 })();
 
@@ -81,4 +84,47 @@ function changePrayerTime(info) {
     document.querySelector('table tbody tr td:nth-of-type(3)').innerHTML = prayer.asr;
     document.querySelector('table tbody tr td:nth-of-type(4)').innerHTML = prayer.maghrib;
     document.querySelector('table tbody tr td:nth-of-type(5)').innerHTML = prayer.isha;
+}
+chrome.runtime.onInstalled.addListener(function(details) {
+    if (details.reason == "install") {
+        // console.log("This is a first install!");
+        var position;
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(pos) {
+                position = pos;
+                getUserCity(position.coords.latitude, position.coords.longitude, function(city) {
+                    console.log(city)
+                    chrome.storage.sync.set({
+                        city: city,
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    }, function() {
+                        // Update status to let user know options were saved.
+                        //alert('Settings Saved');
+                    });
+                });
+            });
+        }
+    }
+});
+
+function getUserCity(lat, lng) {
+    var xmlhttp = new XMLHttpRequest()
+    var responseData;
+    xmlhttp.open("GET", "https://maps.googleapis.com/maps/api/geocode/json?latlng=" + lat + "," + lng, true);
+    xmlhttp.send();
+    xmlhttp.onreadystatechange = function() {
+        if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+            var responseData = JSON.parse(xmlhttp.responseText);
+            var result = responseData.results[0];
+            //look for locality tag and administrative_area_level_1
+            var city = "";
+            var state = "";
+            for (var i = 0, len = result.address_components.length; i < len; i++) {
+                var ac = result.address_components[i];
+                if (ac.types.indexOf("administrative_area_level_1") >= 0) state = ac.long_name;
+            }
+            return state;
+        }
+    }
 }

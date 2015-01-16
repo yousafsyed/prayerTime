@@ -12,5 +12,5 @@
     "background": {
         "scripts": ["prayerTime.js", "background.js"]
     },
-    "permissions": ["notifications", "background","storage","https://maxcdn.bootstrapcdn.com/"]
+    "permissions": ["notifications", "background","storage","https://maxcdn.bootstrapcdn.com/","geolocation"]
 }

@@ -89,20 +89,21 @@
             var times = pt.getTimes(new Date(), cordinates, getTimeZone());
             for (var key in times) {
                 var obj = times[key];
-                //if (key != "asr" || key != "dhur" || key != "fajr" || key != "isha" || key != "maghrib") return false;
-                var playedDate = played.date.setHours(0, 0, 0, 0);
-                var todaysDate = new Date().setHours(0, 0, 0, 0);
-                if (todaysDate == playedDate) {
-                    if (played.times[key] == true) {
-                        continue;
+                if (key == "asr" || key == "dhur" || key == "fajr" || key == "isha" || key == "maghrib") {
+                    var playedDate = played.date.setHours(0, 0, 0, 0);
+                    var todaysDate = new Date().setHours(0, 0, 0, 0);
+                    if (todaysDate == playedDate) {
+                        if (played.times[key] == true) {
+                            continue;
+                        }
+                    } else {
+                        played.date = new Date();
+                        played.times[key] = false;
                     }
-                } else {
-                    played.date = new Date();
-                    played.times[key] = false;
-                }
-                if (time24Hrs(new Date()) == obj) {
-                    played.times[key] = true;
-                    playAlarm(key, obj);
+                    if (time24Hrs(new Date()) == obj) {
+                        played.times[key] = true;
+                        playAlarm(key, obj);
+                    }
                 }
             }
             checkTimes();
