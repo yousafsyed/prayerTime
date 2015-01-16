@@ -1,9 +1,43 @@
 !(function() {
     "use strict";
     var pt = new PrayerTime();
-    var cordinates = [28.4636296, -16.2518467];
+    var cordinates;
+    chrome.storage.sync.get({
+        city: '',
+        lat: '',
+        lng: ''
+    }, function(info) {
+        cordinates = [info.lat, info.lng];
+    });
+    chrome.storage.onChanged.addListener(function(changes, namespace) {
+        var changedCity = false;
+        var info = {};
+        for (key in changes) {
+            var storageChange = changes[key];
+            if (key == 'city' || key == 'lat' || key || 'lng') {
+                changedCity = true;
+                info[key] = storageChange.newValue;
+            }
+        }
+        if (Object.keys(info).length === 3) {
+            cordinates = [info.lat, info.lng];
+        }
+    });
     var audio = new Audio();
     audio.src = "audio/alarm.mp3";
+    var played = {};
+    played.date = new Date();
+    played.times = {
+        asr: false,
+        dhuhr: false,
+        fajr: false,
+        imsak: false,
+        isha: false,
+        maghrib: false,
+        midnight: false,
+        sunrise: false,
+        sunset: false
+    }
 
     function time12Hrs(dt) {
         var formatted = '';
@@ -53,29 +87,26 @@
     function checkTimes() {
         setTimeout(function() {
             var times = pt.getTimes(new Date(), cordinates, getTimeZone());
-       times=     {
-    asr: "20:06",
-    dhuhr: "20:04",
-    fajr: "20:2",
-    imsak: "20:21",
-    isha: "20:10",
-    maghrib: "20:08",
-    midnight: "20:21",
-    sunrise: "20:21",
-    sunset: "20:21"
-}
             for (var key in times) {
                 var obj = times[key];
-                console.log('key',key);
-                console.log('obj',obj);
-                if (key != "asr" || key != "dhur" || key != "fajr" || key != "isha" || key != "maghrib") return false;
-                updateTime(times);
+                //if (key != "asr" || key != "dhur" || key != "fajr" || key != "isha" || key != "maghrib") return false;
+                var playedDate = played.date.setHours(0, 0, 0, 0);
+                var todaysDate = new Date().setHours(0, 0, 0, 0);
+                if (todaysDate == playedDate) {
+                    if (played.times[key] == true) {
+                        continue;
+                    }
+                } else {
+                    played.date = new Date();
+                    played.times[key] = false;
+                }
                 if (time24Hrs(new Date()) == obj) {
-                    playAlarm(key,obj);
+                    played.times[key] = true;
+                    playAlarm(key, obj);
                 }
             }
             checkTimes();
-        }, 60000)
+        }, 1000)
     }
     checkTimes();
 })()
