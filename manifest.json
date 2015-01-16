@@ -4,10 +4,13 @@
     "version": "1.0.0",
     "description": "Get Accurate Prayer times",
     "browser_action": {
-        "name": "Islamic Prayer Times"
+        "name": "Islamic Prayer Times",
+	    "default_popup": "demo.html",
+	    "default_icon": "icon.png"
     },
+
     "background": {
-        "scripts": ["prayerTime.js", "application.js"]
+        "scripts": ["prayerTime.js", "background.js"]
     },
-    "permissions": ["notifications", "background"]
+    "permissions": ["notifications", "background","storage","https://maxcdn.bootstrapcdn.com/"]
 }
