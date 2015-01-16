@@ -1,12 +1,18 @@
 {
+	"update_url": "https://clients2.google.com/service/update2/crx",
     "name": "Islamic Prayer Times",
     "manifest_version": 2,
     "version": "1.0.0",
     "description": "Get Accurate Prayer times",
     "browser_action": {
         "name": "Islamic Prayer Times",
-	    "default_popup": "demo.html",
-	    "default_icon": "icon.png"
+	    "default_popup": "popup.html",
+	    "default_icon": "images/icon_16.png"
+    },
+     "icons": {
+        "16": "images/icon_16.png",
+        "48": "images/icon_48.png",
+        "128": "images/icon_128.png"
     },
 
     "background": {
