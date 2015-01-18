@@ -22,7 +22,7 @@
                 info[key] = storageChange.newValue;
             }
         }
-        if (Object.keys(info).length === 4 {
+        if (Object.keys(info).length === 4) {
             cordinates = [info.lat, info.lng];
             timezone = info.timezone;
         }
@@ -125,7 +125,8 @@
         }, 1000)
     }
     checkTimes();
-})()
+
+
 chrome.runtime.onInstalled.addListener(function(details) {
     if (details.reason == "install") {
         console.log("This is a first install!");
@@ -137,6 +138,7 @@ chrome.runtime.onInstalled.addListener(function(details) {
                 console.log(position.coords.latitude);
                 getUserCity(position.coords.latitude, position.coords.longitude, function(city) {
                     console.log(city);
+                    console.log(getTimeZone());
                     chrome.storage.sync.set({
                         city: city,
                         lat: position.coords.latitude,
@@ -172,3 +174,5 @@ function getUserCity(lat, lng, ca) {
         }
     }
 }
+    
+})()

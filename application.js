@@ -21,7 +21,7 @@ function saveOptions(button) {
                 }, function() {
                     // Update status to let user know options were saved.
                     //alert('Settings Saved');
-                     document.getElementById('timezone').value = timezone;
+                    document.getElementById('timezone').value = timezone
                 });
             } else {
                 alert('City name is not correct');
@@ -83,22 +83,24 @@ function getTimeZone() {
 };
 // change listner for google chrome local storage
 chrome.storage.onChanged.addListener(function(changes, namespace) {
+    timeRemainingInNextPrayer();
     var changedCity = false;
     var info = {};
-    for (var key in changes) {
-        var storageChange = changes[key];
-        if (key == 'city' || key == 'lat' || key == 'lng' || key == 'timezone') {
-            changedCity = true;
-            info[key] = storageChange.newValue;
+    //console.log(changes);
+   
+        for (var key in changes) {
+            var storageChange = changes[key];
+            if (key == 'city' || key == 'lat' || key == 'lng' || key == 'timezone') {
+                changedCity = true;
+                info[key] = storageChange.newValue;
+            }
         }
-    }
-
-    if (Object.keys(info).length == 4) {
-
-       
-        changePrayerTime(info)
-    }
-      
+        if (Object.keys(info).length == 4) {
+            document.getElementById('city').value = info.city;
+            document.getElementById('timezone').value = info.timezone;
+            changePrayerTime(info)
+        }
+    
 });
 
 function changePrayerTime(info) {
@@ -144,7 +146,7 @@ function getNextPrayerTime(pt) {
         }
     }
 }
-timeRemainingInNextPrayer();
+
 function timeRemainingInNextPrayer() {
     chrome.storage.sync.get({
         city: '',
@@ -152,25 +154,27 @@ function timeRemainingInNextPrayer() {
         lng: '',
         timezone: '',
     }, function(info) {
-        var pt = getPrayerTimes(info);
-        delete pt['imsak'];
-        delete pt['midnight'];
-        delete pt['sunrise'];
-        delete pt['sunset'];
-        //console.log(pt);
-        var nextPt = getNextPrayerTime(pt);
-        var timeRemainingObj = get_time_difference(new Date('1970/01/01 ' + time24Hrs(new Date())), new Date('1970/01/01 ' + nextPt[Object.keys(nextPt)[0]]));
-        var string = "Next Prayer in " + timeRemainingObj.duration;
-        document.getElementById('timeRemaingNextPrayer').innerHTML = string;
-        var table = document.querySelector("table tbody tr");
-        var tds = table.getElementsByTagName("td");
-        for (var i = 1; i <= tds.length; i++) {
-            document.querySelector('table tbody tr td:nth-of-type(' + i + ')').classList.remove('alert');
-            document.querySelector('table tbody tr td:nth-of-type(' + i + ')').classList.remove('alert-success');
+        if (typeof info.city != 'undefined') {
+            var pt = getPrayerTimes(info);
+            delete pt['imsak'];
+            delete pt['midnight'];
+            delete pt['sunrise'];
+            delete pt['sunset'];
+            console.log(pt);
+            var nextPt = getNextPrayerTime(pt);
+            var timeRemainingObj = get_time_difference(new Date('1970/01/01 ' + time24Hrs(new Date())), new Date('1970/01/01 ' + nextPt[Object.keys(nextPt)[0]]));
+            var string = "Next Prayer in " + timeRemainingObj.duration;
+            document.getElementById('timeRemaingNextPrayer').innerHTML = string;
+            var table = document.querySelector("table tbody tr");
+            var tds = table.getElementsByTagName("td");
+            for (var i = 1; i <= tds.length; i++) {
+                document.querySelector('table tbody tr td:nth-of-type(' + i + ')').classList.remove('alert');
+                document.querySelector('table tbody tr td:nth-of-type(' + i + ')').classList.remove('alert-success');
+            }
+            document.getElementById(Object.keys(nextPt)[0]).classList.add('alert');
+            document.getElementById(Object.keys(nextPt)[0]).classList.add('alert-success');
         }
-        document.getElementById(Object.keys(nextPt)[0]).classList.add('alert'); 
-        document.getElementById(Object.keys(nextPt)[0]).classList.add('alert-success');
-});
+    });
 }
 
 function get_time_difference(earlierDate, laterDate) {
