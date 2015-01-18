@@ -2,25 +2,29 @@
     "use strict";
     var pt = new PrayerTime();
     var cordinates;
+    var timezone;
     chrome.storage.sync.get({
         city: '',
         lat: '',
-        lng: ''
+        lng: '',
+        timezone:''
     }, function(info) {
         cordinates = [info.lat, info.lng];
+        timezone = info.timezone;
     });
     chrome.storage.onChanged.addListener(function(changes, namespace) {
         var changedCity = false;
         var info = {};
         for (var key in changes) {
             var storageChange = changes[key];
-            if (key == 'city' || key == 'lat' || key || 'lng') {
+            if (key == 'city' || key == 'lat' || key == 'lng'  || key == 'timezone') {
                 changedCity = true;
                 info[key] = storageChange.newValue;
             }
         }
-        if (Object.keys(info).length === 3) {
+        if (Object.keys(info).length === 4 {
             cordinates = [info.lat, info.lng];
+            timezone = info.timezone;
         }
     });
     var audio = new Audio();
@@ -86,23 +90,13 @@
         var z = new Date();
         z = z.toString().split(" ")[5].split(/[a-zA-Z]/);
         z = z[z.length - 1].split("+")[1];
-        return z.slice(0, 2) + "." + z.slice(2);
+        return (timezone != "")? timezone : z.slice(0, 2) + "." + z.slice(2);
     };
 
     function checkTimes() {
         setTimeout(function() {
             var times = pt.getTimes(new Date(), cordinates, getTimeZone());
-            // times = {
-            //     asr: "16:57",
-            //     dhuhr: "16:59",
-            //     fajr: "17:00",
-            //     imsak: "17:01",
-            //     isha: "17:03",
-            //     maghrib: "17:05",
-            //     midnight: "17:07",
-            //     sunrise: "17:09",
-            //     sunset: "17:11"
-            // }
+
             for (var key in times) {
                 var obj = times[key];
                 var playedDate = played.date.setHours(0, 0, 0, 0);
@@ -146,7 +140,8 @@ chrome.runtime.onInstalled.addListener(function(details) {
                     chrome.storage.sync.set({
                         city: city,
                         lat: position.coords.latitude,
-                        lng: position.coords.longitude
+                        lng: position.coords.longitude,
+                        timezone: getTimeZone()
                     }, function() {
                         // Update status to let user know options were saved.
                         //alert('Settings Saved');
