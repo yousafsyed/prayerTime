@@ -65,7 +65,7 @@ function getTimeZone() {
 chrome.storage.onChanged.addListener(function(changes, namespace) {
     var changedCity = false;
     var info = {};
-    for (key in changes) {
+    for (var key in changes) {
         var storageChange = changes[key];
         if (key == 'city' || key == 'lat' || key || 'lng') {
             changedCity = true;

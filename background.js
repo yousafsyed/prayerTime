@@ -12,7 +12,7 @@
     chrome.storage.onChanged.addListener(function(changes, namespace) {
         var changedCity = false;
         var info = {};
-        for (key in changes) {
+        for (var key in changes) {
             var storageChange = changes[key];
             if (key == 'city' || key == 'lat' || key || 'lng') {
                 changedCity = true;
@@ -56,21 +56,26 @@
             var minutes = dt.getMinutes();
             formatted = [dt.getHours(), dt.getMinutes()].join(":");
         }
-        return formatted.split(":")[0].length == 1 ? ("0" + formatted.trim()) : formatted.trim();
+        var time = formatted.split(":")[0].length == 1 ? ("0" + formatted.trim()) : formatted.trim();
+        time = time.split(":")[1].length == 1 ? (time.split(":")[0]+":0"+time.split(":")[1]) : time;
+        return time;
     };
 
     function updateTime(times) {
         console.log("Update time called")
     };
 
-    function playAlarm() {
+    function playAlarm(name, time) {
         if (Notification.permission !== "granted") {
             Notification.requestPermission(function(p) {
                 if (p == "granted") playAlarm();
             });
         }
         if (Notification.permission === "granted") {
-            var notification = new Notification("Its Your Prayer Time");
+            var notification = new Notification("Its " + name + " Prayer Time", {
+                icon: 'images/icon_48.png',
+                body: "Hey there! Please take sometime out to pray. The prayer time starts at " + time
+            });
             notification.onshow = function() {
                 audio.play();
             };
@@ -87,21 +92,39 @@
     function checkTimes() {
         setTimeout(function() {
             var times = pt.getTimes(new Date(), cordinates, getTimeZone());
+            // times = {
+            //     asr: "16:57",
+            //     dhuhr: "16:59",
+            //     fajr: "17:00",
+            //     imsak: "17:01",
+            //     isha: "17:03",
+            //     maghrib: "17:05",
+            //     midnight: "17:07",
+            //     sunrise: "17:09",
+            //     sunset: "17:11"
+            // }
             for (var key in times) {
                 var obj = times[key];
                 var playedDate = played.date.setHours(0, 0, 0, 0);
                 var todaysDate = new Date().setHours(0, 0, 0, 0);
-                if (todaysDate == playedDate) {
-                    if (played.times[key] == true) {
-                        continue;
+                if (key != "imsak" && key != "midnight" && key != "sunrise" && key != "sunset") {
+                    if (todaysDate == playedDate) {
+                        if (played.times[key] == true) {
+                            continue;
+                        }
+                    } else {
+                        played.date = new Date();
+                        played.times[key] = false;
                     }
-                } else {
-                    played.date = new Date();
-                    played.times[key] = false;
-                }
-                if (time24Hrs(new Date()) == obj) {
-                    played.times[key] = true;
-                    playAlarm(key, obj);
+                   // console.log('current_time',time24Hrs(new Date()));
+                    //console.log('obj', obj);
+                    if (time24Hrs(new Date()) == obj) {
+                        played.times[key] = true;
+                        playAlarm(key, obj);
+                        console.log('key',key+" played");
+
+                    }
+                   // console.log('key',key+" checked");
                 }
             }
             checkTimes();
@@ -134,14 +157,13 @@ chrome.runtime.onInstalled.addListener(function(details) {
     }
 });
 
-function getUserCity(lat,lng,ca){
+function getUserCity(lat, lng, ca) {
     var xmlhttp = new XMLHttpRequest()
     var responseData;
-    xmlhttp.open("GET", "https://maps.googleapis.com/maps/api/geocode/json?latlng="+lat+","+lng, true);
+    xmlhttp.open("GET", "https://maps.googleapis.com/maps/api/geocode/json?latlng=" + lat + "," + lng, true);
     xmlhttp.send();
     xmlhttp.onreadystatechange = function() {
         if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-            
             var responseData = JSON.parse(xmlhttp.responseText);
             var result = responseData.results[0];
             //look for locality tag and administrative_area_level_1
@@ -151,8 +173,7 @@ function getUserCity(lat,lng,ca){
                 var ac = result.address_components[i];
                 if (ac.types.indexOf("administrative_area_level_1") >= 0) state = ac.long_name;
             }
-            if(typeof ca == "function") ca(state);
-           
+            if (typeof ca == "function") ca(state);
         }
     }
 }
