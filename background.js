@@ -7,7 +7,7 @@
         city: '',
         lat: '',
         lng: '',
-        timezone:''
+        timezone: ''
     }, function(info) {
         cordinates = [info.lat, info.lng];
         timezone = info.timezone;
@@ -17,7 +17,7 @@
         var info = {};
         for (var key in changes) {
             var storageChange = changes[key];
-            if (key == 'city' || key == 'lat' || key == 'lng'  || key == 'timezone') {
+            if (key == 'city' || key == 'lat' || key == 'lng' || key == 'timezone') {
                 changedCity = true;
                 info[key] = storageChange.newValue;
             }
@@ -61,7 +61,7 @@
             formatted = [dt.getHours(), dt.getMinutes()].join(":");
         }
         var time = formatted.split(":")[0].length == 1 ? ("0" + formatted.trim()) : formatted.trim();
-        time = time.split(":")[1].length == 1 ? (time.split(":")[0]+":0"+time.split(":")[1]) : time;
+        time = time.split(":")[1].length == 1 ? (time.split(":")[0] + ":0" + time.split(":")[1]) : time;
         return time;
     };
 
@@ -90,89 +90,86 @@
         var z = new Date();
         z = z.toString().split(" ")[5].split(/[a-zA-Z]/);
         z = z[z.length - 1].split("+")[1];
-        return (timezone != "")? timezone : z.slice(0, 2) + "." + z.slice(2);
+        return (timezone != "") ? timezone : z.slice(0, 2) + "." + z.slice(2);
     };
 
     function checkTimes() {
         setTimeout(function() {
-            var times = pt.getTimes(new Date(), cordinates, getTimeZone());
-
-            for (var key in times) {
-                var obj = times[key];
-                var playedDate = played.date.setHours(0, 0, 0, 0);
-                var todaysDate = new Date().setHours(0, 0, 0, 0);
-                if (key != "imsak" && key != "midnight" && key != "sunrise" && key != "sunset") {
-                    if (todaysDate == playedDate) {
-                        if (played.times[key] == true) {
-                            continue;
+            if (typeof cordinates[0] != 'undefined' && typeof cordinates[1] != 'undefined') {
+                var times = pt.getTimes(new Date(), cordinates, getTimeZone());
+                for (var key in times) {
+                    var obj = times[key];
+                    var playedDate = played.date.setHours(0, 0, 0, 0);
+                    var todaysDate = new Date().setHours(0, 0, 0, 0);
+                    if (key != "imsak" && key != "midnight" && key != "sunrise" && key != "sunset") {
+                        if (todaysDate == playedDate) {
+                            if (played.times[key] == true) {
+                                continue;
+                            }
+                        } else {
+                            played.date = new Date();
+                            played.times[key] = false;
                         }
-                    } else {
-                        played.date = new Date();
-                        played.times[key] = false;
+                        // console.log('current_time',time24Hrs(new Date()));
+                        //console.log('obj', obj);
+                        if (time24Hrs(new Date()) == obj) {
+                            played.times[key] = true;
+                            playAlarm(key, obj);
+                            console.log('key', key + " played");
+                        }
+                        // console.log('key',key+" checked");
                     }
-                   // console.log('current_time',time24Hrs(new Date()));
-                    //console.log('obj', obj);
-                    if (time24Hrs(new Date()) == obj) {
-                        played.times[key] = true;
-                        playAlarm(key, obj);
-                        console.log('key',key+" played");
-
-                    }
-                   // console.log('key',key+" checked");
                 }
             }
             checkTimes();
         }, 1000)
     }
     checkTimes();
-
-
-chrome.runtime.onInstalled.addListener(function(details) {
-    if (details.reason == "install") {
-        console.log("This is a first install!");
-        var position;
-        var position;
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(function(pos) {
-                position = pos;
-                console.log(position.coords.latitude);
-                getUserCity(position.coords.latitude, position.coords.longitude, function(city) {
-                    console.log(city);
-                    console.log(getTimeZone());
-                    chrome.storage.sync.set({
-                        city: city,
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude,
-                        timezone: getTimeZone()
-                    }, function() {
-                        // Update status to let user know options were saved.
-                        //alert('Settings Saved');
+    chrome.runtime.onInstalled.addListener(function(details) {
+        if (details.reason == "install") {
+            console.log("This is a first install!");
+            var position;
+            var position;
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    position = pos;
+                    console.log(position.coords.latitude);
+                    getUserCity(position.coords.latitude, position.coords.longitude, function(city) {
+                        console.log(city);
+                        console.log(getTimeZone());
+                        chrome.storage.sync.set({
+                            city: city,
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude,
+                            timezone: getTimeZone()
+                        }, function() {
+                            // Update status to let user know options were saved.
+                            //alert('Settings Saved');
+                        });
                     });
                 });
-            });
-        }
-    }
-});
-
-function getUserCity(lat, lng, ca) {
-    var xmlhttp = new XMLHttpRequest()
-    var responseData;
-    xmlhttp.open("GET", "https://maps.googleapis.com/maps/api/geocode/json?latlng=" + lat + "," + lng, true);
-    xmlhttp.send();
-    xmlhttp.onreadystatechange = function() {
-        if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-            var responseData = JSON.parse(xmlhttp.responseText);
-            var result = responseData.results[0];
-            //look for locality tag and administrative_area_level_1
-            var city = "";
-            var state = "";
-            for (var i = 0, len = result.address_components.length; i < len; i++) {
-                var ac = result.address_components[i];
-                if (ac.types.indexOf("administrative_area_level_1") >= 0) state = ac.long_name;
             }
-            if (typeof ca == "function") ca(state);
+        }
+    });
+
+    function getUserCity(lat, lng, ca) {
+        var xmlhttp = new XMLHttpRequest()
+        var responseData;
+        xmlhttp.open("GET", "https://maps.googleapis.com/maps/api/geocode/json?latlng=" + lat + "," + lng, true);
+        xmlhttp.send();
+        xmlhttp.onreadystatechange = function() {
+            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                var responseData = JSON.parse(xmlhttp.responseText);
+                var result = responseData.results[0];
+                //look for locality tag and administrative_area_level_1
+                var city = "";
+                var state = "";
+                for (var i = 0, len = result.address_components.length; i < len; i++) {
+                    var ac = result.address_components[i];
+                    if (ac.types.indexOf("administrative_area_level_1") >= 0) state = ac.long_name;
+                }
+                if (typeof ca == "function") ca(state);
+            }
         }
     }
-}
-    
 })()
